@@ -1,13 +1,24 @@
+import static java.nio.file.StandardOpenOption.CREATE;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.BufferedOutputStream;
+import java.io.BufferedWriter;
+import java.io.FileWriter;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
+import java.io.PrintWriter;
+import java.nio.file.FileSystem;
+import java.nio.file.FileSystems;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Random;
-
 import javax.swing.*;
 
 /**
  * @author Aaron Toth 300770784
  * @version 1.0
+ * The object of the game is to find all the Martians before finding both Jupiterians.
  * Final Assignment for Java Intermediate
  */
 public class JAlienHunt extends JApplet implements ActionListener
@@ -20,6 +31,19 @@ public class JAlienHunt extends JApplet implements ActionListener
 	
 	//random generator for mixing up the aliens/buttons
 	private final Random randomGenNumber = new Random();
+	
+	//creates FileSystem object
+	private FileSystem fs = FileSystems.getDefault(); 
+	
+	//keep track of the aliens found
+	private int jupiteriansFound;
+	private int martiansFound;
+	
+	//keep track of what button the user picked (according to the array of buttons)
+	private int selectedIndex = 8;
+	
+	//score to write to the scores file
+	private int loggedScore = 0;
 	
 	//applet buttons
 	private JButton oneButton = new JButton("#1");
@@ -38,8 +62,10 @@ public class JAlienHunt extends JApplet implements ActionListener
 	private JMenuItem exit = new JMenuItem("Exit");
 	
 	//Martian classes
-	private Martian newMartian = new Martian();
-	private Jupiterian newJupiterian = new Jupiterian();
+	private Jupiterian newJupiterian = new Jupiterian(); //this alien is represented by a 0 in the alienArray[0]
+	private Martian newMartian = new Martian(); //this alien is represented by a 1 in the alienArray[]
+	
+	private Graphics pen;
 	
 	//array of 0's and 1's.  This will be randomized and each index value will be associated with one button
 	private int[] alienArray = {0, 0, 1, 1, 1, 1, 1, 1};
@@ -47,6 +73,7 @@ public class JAlienHunt extends JApplet implements ActionListener
 	//array of buttons
 	private JButton[] buttonArray = new JButton[8];
 	
+	//container for all the buttons
 	Container con = getContentPane();
 	
 	/**
@@ -65,9 +92,9 @@ public class JAlienHunt extends JApplet implements ActionListener
 		buttonArray[7] = eightButton;
 		
 		//disables all buttons before the user decides to play the game
-		for(int disableIndex = 0; disableIndex < buttonArray.length; disableIndex++)
+		for(int disableAll = 0; disableAll < buttonArray.length; disableAll++)
 		{
-			buttonArray[disableIndex].setEnabled(false);
+			buttonArray[disableAll].setEnabled(false);
 		}
 		
 		//sets the layout for the applet and adds the eight buttons to the screen
@@ -103,7 +130,6 @@ public class JAlienHunt extends JApplet implements ActionListener
 		setSize(240, 180);	
 	}
 	
-	
 	/**
 	 * @param buttonPress is the source of the action the user executed (button clicked)
 	 */
@@ -111,58 +137,81 @@ public class JAlienHunt extends JApplet implements ActionListener
 	{
 		try
 		{
-			//enables all the buttons for the user to guess where the aliens (martians and jupeterians) are
-			if(userChoice.getSource() == play) //user starts the game
+			//check if the user wants to play the game or exit the application
+			if(userChoice.getSource() == play)
 			{
-				for(int enableIndex = 0; enableIndex < buttonArray.length; enableIndex++)
+				//re-initialize the aliens found back to 0 for when the user starts a new game
+				jupiteriansFound = 0;
+				martiansFound = 0;
+				System.out.println("!! Alien Hunt !!");
+				System.out.println("Find the 6 Martians before you find the 2 Jupeterians");
+				shuffleArray(); //shuffle the array of aliens and enable all of the buttons
+				for(int enableAll = 0; enableAll < buttonArray.length; enableAll++)
 				{
-					buttonArray[enableIndex].setEnabled(true);
+					buttonArray[enableAll].setEnabled(true);
 				}
 			}
 			
-			else if(userChoice.getSource() == exit) //user closes the application using the File -> Exit menu
+			else if(userChoice.getSource() == exit)
 			{
 				System.exit(0);
 			}
 			
+			//check to see what button the user has pressed
 			else if(userChoice.getSource() == oneButton)
 			{
+				selectedIndex = 0;
 				oneButton.setEnabled(false);
+				scoreKeeper();
 			}
 			
 			else if(userChoice.getSource() == twoButton)
 			{
+				selectedIndex = 1;
 				twoButton.setEnabled(false);
+				scoreKeeper();
 			}
 			
 			else if(userChoice.getSource() == threeButton)
 			{
+				selectedIndex = 2;
 				threeButton.setEnabled(false);
+				scoreKeeper();
 			}
 			
 			else if(userChoice.getSource() == fourButton)
 			{
+				selectedIndex = 3;
 				fourButton.setEnabled(false);
+				scoreKeeper();
 			}
 			
 			else if(userChoice.getSource() == fiveButton)
 			{
+				selectedIndex = 4;
 				fiveButton.setEnabled(false);
+				scoreKeeper();
 			}
 			
 			else if(userChoice.getSource() == sixButton)
 			{
+				selectedIndex = 5;
 				sixButton.setEnabled(false);
+				scoreKeeper();
 			}
 			
 			else if(userChoice.getSource() == sevenButton)
 			{
+				selectedIndex = 6;
 				sevenButton.setEnabled(false);
+				scoreKeeper();
 			}
 			
 			else if(userChoice.getSource() == eightButton)
 			{
+				selectedIndex = 7;
 				eightButton.setEnabled(false);
+				scoreKeeper();
 			}
 		}
 		
@@ -173,7 +222,60 @@ public class JAlienHunt extends JApplet implements ActionListener
 	}
 	
 	/**
-	 * 
+	 * displays the output to the screen.
+	 * shows the user what they have uncovered for each button press/click
+	 * displays the running score.  when 2 Jupiterians are found, the game is over
+	 */
+	public void scoreKeeper()
+	{
+		//check if the user found a jupiterian or an alien
+		if(alienArray[selectedIndex] == 0) //jupiterian found
+		{
+			jupiteriansFound++;
+			System.out.println("You have found " + jupiteriansFound + " Jupiterians");
+			
+			if(jupiteriansFound == 2)
+			{
+				//disables all buttons before the user decides to play the game
+				for(int disableAll = 0; disableAll < buttonArray.length; disableAll++)
+				{
+					buttonArray[disableAll].setEnabled(false);
+				}
+				
+				System.out.println("Game over, you lose!");
+				loggedScore = 0;
+				logScores(loggedScore);
+			}	
+		}
+		
+		else if(alienArray[selectedIndex] == 1) //martian found
+		{
+			martiansFound++;
+			System.out.println("You have found " + martiansFound + " Martians");
+			
+			if(martiansFound == 6)
+			{
+				//disables all buttons before the user decides to play the game
+				for(int disableAll = 0; disableAll < buttonArray.length; disableAll++)
+				{
+					buttonArray[disableAll].setEnabled(false);
+				}
+				
+				System.out.println("Game over, you win!");
+				loggedScore = 10;
+				logScores(loggedScore);
+			}	
+		}
+		
+		else
+		{
+			System.out.println("Invalid selection");
+		}
+	}
+	
+	/**
+	 * Shuffles the array of 0's and 1's.  Each of the values in the array is assigned via a parallel array to
+	 * the array of buttons
 	 */
 	public void shuffleArray()
 	{
@@ -188,20 +290,36 @@ public class JAlienHunt extends JApplet implements ActionListener
 			alienArray[indexToReplace] = alienArray[randomIndex]; //assign value in random index to current loop index
 			alienArray[randomIndex] = tempNumber; //assign the value in tempNumber to the random index value
 		}
-		
-		displayArray(); //call the print method()
 	}
 	
-	
-	public void displayArray()
-	{
-		System.out.printf( "%s%8s\n", "Index", "Value" );
-		int index = 0; // used to increment the loop
-		for(index = 0; index < alienArray.length; ++index)
+	/**
+	 * Write scores to game.scores.txt file
+	 */
+	public void logScores(int loggedScore)
+	{			
+		try
 		{
-			System.out.printf( "%5d%8d\n", index, alienArray[index]);
+			Path writePath = fs.getPath("/home/aaron/Documents/Centennial/Intermediate/Assignments/Test/scores.txt");
+			Path writePathTwo = fs.getPath("/home/aaron/Documents/Centennial/Intermediate/Assignments/Test/scores2.txt");
+			
+			OutputStream fileOutputOne = new BufferedOutputStream(Files.newOutputStream(writePath, CREATE)); //creates the file
+			BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(fileOutputOne)); //buffer of data for file
+			FileWriter output = new FileWriter(""+ writePathTwo +"");
+			PrintWriter out = new PrintWriter(output);
+				
+			//FileWriter - writes to the scores.txt file
+			out.println(loggedScore);
+			
+			//BufferedWriter - writes to the scores2.txt file
+			writer.write(Integer.toString(loggedScore), 0, Integer.toString(loggedScore).length());
+			writer.newLine();
+			
+			System.out.println("this ran");
 		}
 		
-		System.out.println();
+		catch(Exception e)
+		{
+			System.out.println("Exception : " + e.toString());
+		}
 	}
 }
