@@ -1,17 +1,9 @@
-import static java.nio.file.StandardOpenOption.CREATE;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.io.BufferedOutputStream;
 import java.io.BufferedWriter;
+import java.io.File;
 import java.io.FileWriter;
-import java.io.OutputStream;
-import java.io.OutputStreamWriter;
-import java.io.PrintWriter;
-import java.nio.file.FileSystem;
-import java.nio.file.FileSystems;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.Random;
 import javax.swing.*;
 
@@ -31,9 +23,6 @@ public class JAlienHunt extends JApplet implements ActionListener
 	
 	//random generator for mixing up the aliens/buttons
 	private final Random randomGenNumber = new Random();
-	
-	//creates FileSystem object
-	private FileSystem fs = FileSystems.getDefault(); 
 	
 	//keep track of the aliens found
 	private int jupiteriansFound;
@@ -64,8 +53,6 @@ public class JAlienHunt extends JApplet implements ActionListener
 	//Martian classes
 	private Jupiterian newJupiterian = new Jupiterian(); //this alien is represented by a 0 in the alienArray[0]
 	private Martian newMartian = new Martian(); //this alien is represented by a 1 in the alienArray[]
-	
-	private Graphics pen;
 	
 	//array of 0's and 1's.  This will be randomized and each index value will be associated with one button
 	private int[] alienArray = {0, 0, 1, 1, 1, 1, 1, 1};
@@ -222,7 +209,7 @@ public class JAlienHunt extends JApplet implements ActionListener
 	}
 	
 	/**
-	 * displays the output to the screen.
+	 * displays the output to the screen/console.
 	 * shows the user what they have uncovered for each button press/click
 	 * displays the running score.  when 2 Jupiterians are found, the game is over
 	 */
@@ -293,28 +280,37 @@ public class JAlienHunt extends JApplet implements ActionListener
 	}
 	
 	/**
-	 * Write scores to game.scores.txt file
+	 * Write scores to scores.txt file
 	 */
 	public void logScores(int loggedScore)
 	{			
 		try
 		{
-			Path writePath = fs.getPath("/home/aaron/Documents/Centennial/Intermediate/Assignments/Test/scores.txt");
-			Path writePathTwo = fs.getPath("/home/aaron/Documents/Centennial/Intermediate/Assignments/Test/scores2.txt");
+			//concatenate the score and text to be written to the scores.txt file
+			String scoreString = "You scored " + loggedScore + " points";
 			
-			OutputStream fileOutputOne = new BufferedOutputStream(Files.newOutputStream(writePath, CREATE)); //creates the file
-			BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(fileOutputOne)); //buffer of data for file
-			FileWriter output = new FileWriter(""+ writePathTwo +"");
-			PrintWriter out = new PrintWriter(output);
-				
-			//FileWriter - writes to the scores.txt file
-			out.println(loggedScore);
+			//UNIX
+			File file = new File("/home/aaron/Documents/Centennial/Intermediate/Assignments/Test/scores.txt");
 			
-			//BufferedWriter - writes to the scores2.txt file
-			writer.write(Integer.toString(loggedScore), 0, Integer.toString(loggedScore).length());
-			writer.newLine();
+			//Windoze
+			//File file = new File("C:\\temp\\scores.txt");
 			
-			System.out.println("this ran");
+			if(!file.exists())
+			{
+				System.out.println("Created the file: " + file.getName().toString() + " and added the first score in " + file.getPath());
+    			file.createNewFile();
+    		}
+			
+			else
+			{
+				System.out.println("Updated the file: " + file.getName().toString() + " with the new scores");
+			}
+			
+    		FileWriter fileWriter = new FileWriter(file,true);
+    	    BufferedWriter bufferedWriter = new BufferedWriter(fileWriter);
+    	    bufferedWriter.write(scoreString);
+    	    bufferedWriter.newLine();
+    	    bufferedWriter.close();
 		}
 		
 		catch(Exception e)
