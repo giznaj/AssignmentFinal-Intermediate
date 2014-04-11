@@ -1,3 +1,4 @@
+import java.applet.AudioClip;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -63,6 +64,10 @@ public class JAlienHunt extends JApplet implements ActionListener
 	//container for all the buttons
 	Container con = getContentPane();
 	
+	//music for the game while hunting for the aliens
+	AudioClip gameMusic; 
+
+	
 	/**
 	 * initialize the two alien objects.  once initialized, this applet can call the draw methods in each of 
 	 * the alien objects
@@ -113,9 +118,28 @@ public class JAlienHunt extends JApplet implements ActionListener
 		play.addActionListener(this);
 		exit.addActionListener(this);
 		
+		gameMusic = getAudioClip(getCodeBase(),"mysteryTune.au");
+		
 		//sets the size of the applet window
 		setSize(240, 180);	
 	}
+	
+	/**
+	 * loop through the sound file
+	 */
+	public void start()
+	{
+		gameMusic.loop();
+	}
+	
+	/**
+	 * stops the music loop
+	 */
+	public void stop()
+	{
+		gameMusic.stop();
+	}
+
 	
 	/**
 	 * @param buttonPress is the source of the action the user executed (button clicked)
@@ -219,6 +243,7 @@ public class JAlienHunt extends JApplet implements ActionListener
 		if(alienArray[selectedIndex] == 0) //jupiterian found
 		{
 			jupiteriansFound++;
+			con.setBackground(Color.RED);
 			System.out.println("You have found " + jupiteriansFound + " Jupiterians");
 			
 			if(jupiteriansFound == 2)
@@ -230,18 +255,30 @@ public class JAlienHunt extends JApplet implements ActionListener
 				}
 				
 				System.out.println("Game over, you lose!");
+				System.out.println("Earth has been destroyed!");
 				loggedScore = 0;
 				logScores(loggedScore);
+				stop();
 			}	
 		}
 		
 		else if(alienArray[selectedIndex] == 1) //martian found
 		{
 			martiansFound++;
+			con.setBackground(Color.GREEN);
 			System.out.println("You have found " + martiansFound + " Martians");
 			
 			if(martiansFound == 6)
 			{
+				if(jupiteriansFound == 1)
+				{
+					loggedScore = 10; //6 matians found and 1 jupiterian found
+				}
+				
+				else if(jupiteriansFound == 0)
+				{
+					loggedScore = 20; //6 martians found and 0 jupiterians found (perfect game)
+				}
 				//disables all buttons before the user decides to play the game
 				for(int disableAll = 0; disableAll < buttonArray.length; disableAll++)
 				{
@@ -249,7 +286,6 @@ public class JAlienHunt extends JApplet implements ActionListener
 				}
 				
 				System.out.println("Game over, you win!");
-				loggedScore = 10;
 				logScores(loggedScore);
 			}	
 		}
@@ -258,6 +294,8 @@ public class JAlienHunt extends JApplet implements ActionListener
 		{
 			System.out.println("Invalid selection");
 		}
+		
+		//display the aliens here
 	}
 	
 	/**
