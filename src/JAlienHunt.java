@@ -156,6 +156,7 @@ public class JAlienHunt extends JApplet implements ActionListener
 		//sets the size of the applet window
 		setSize(240, 280);
 		
+		//determine that there is an active game
 		gameInProgress = false;
 		
 		}
@@ -205,24 +206,26 @@ public class JAlienHunt extends JApplet implements ActionListener
 						"Screen turns RED when you find a Jupiterian\n\n" +
 						"0 points for losing the game\n" +
 						"10 points for winning the game\n" +
-						"20 points for getting a PERFECT game");
+						"20 points for getting a PERFECT game\n" +
+						"Check Scores.txt for high scores and dates\n\n");
 			}
 			
 			//about popup window for the game
 			else if(userChoice.getSource() == about)
 			{
-				JOptionPane.showMessageDialog(null,"Alien Hunt 1.0\nAaron Toth\n300770784");
+				JOptionPane.showMessageDialog(null,"Game: Alien Hunt 1.0\nStudent: Aaron Toth\nStudent #: 300770784\n" +
+						"Project: Final Assignment\n\n");
 			}
 			
 			//stop/start music on a current game
 			else if(userChoice.getSource() == soundOff) 
 			{
-				if(soundOff.isSelected() == true)
+				if(soundOff.isSelected() == true && gameInProgress == true)
 					{
 						gameMusic.stop();
 					}
 				
-				else
+				else if(soundOff.isSelected() == false && gameInProgress == true)
 					{
 						gameMusic.loop();
 					}
@@ -302,13 +305,14 @@ public class JAlienHunt extends JApplet implements ActionListener
 		//check if the user found a jupiterian or an alien
 		if(alienArray[selectedIndex] == 0) //jupiterian found
 		{
+			con.setBackground(Color.RED);
 			jupiteriansFound++;
 			monkeyShout.play();
 			System.out.println("You have found " + jupiteriansFound + " Jupiterians");
 			
 			if(jupiteriansFound == 2)
 			{
-				//disables all buttons before the user decides to play the game
+				//disables all buttons before the user decides to play a new game or not
 				for(int disableAll = 0; disableAll < buttonArray.length; disableAll++)
 				{
 					buttonArray[disableAll].setEnabled(false);
@@ -320,6 +324,7 @@ public class JAlienHunt extends JApplet implements ActionListener
 				logScores(loggedScore);
 				gameMusic.stop();
 				blowUpEarth.play();
+				play.setEnabled(true);
 			}
 			
 			repaint();
@@ -327,11 +332,18 @@ public class JAlienHunt extends JApplet implements ActionListener
 		
 		else if(alienArray[selectedIndex] == 1) //martian found
 		{
+			con.setBackground(Color.GREEN);
 			martiansFound++;
 			System.out.println("You have found " + martiansFound + " Martians");
 			
 			if(martiansFound == 6)
 			{
+				//disables all buttons before the user decides to play the game
+				for(int disableAll = 0; disableAll < buttonArray.length; disableAll++)
+				{
+					buttonArray[disableAll].setEnabled(false);
+				}
+				
 				if(jupiteriansFound == 1)
 				{
 					System.out.println("Game over, you win!");
@@ -344,16 +356,12 @@ public class JAlienHunt extends JApplet implements ActionListener
 					System.out.println("A PERFECT GAME!");
 					loggedScore = 20; //6 martians found and 0 jupiterians found (perfect game)
 				}
-				//disables all buttons before the user decides to play the game
-				for(int disableAll = 0; disableAll < buttonArray.length; disableAll++)
-				{
-					buttonArray[disableAll].setEnabled(false);
-				}
 				
 				System.out.println("Earth has been saved!");
 				logScores(loggedScore);
 				gameMusic.stop();
 				drawingBoard.play();
+				play.setEnabled(true);
 			}	
 			
 			repaint();
@@ -433,24 +441,25 @@ public class JAlienHunt extends JApplet implements ActionListener
 	 */
 	public void paint(Graphics pen)
 	{
+		System.out.println("Paint method ran");
 		super.paint(pen);
-		if(alienArray[selectedIndex] == 0)
+		if(alienArray[selectedIndex] == 0 && gameInProgress == true)
 		{
 			newJupiterian.draw(pen, 145, 120);
 			newJupiterian.drawString(pen, 115, 240);
-			con.setBackground(Color.RED);
+			//con.setBackground(Color.RED);
 		}
 		
-		else if(alienArray[selectedIndex] == 1)
+		else if(alienArray[selectedIndex] == 1 && gameInProgress == true)
 		{
 			newMartian.draw(pen, 25, 130);
 			newMartian.drawString(pen, 10, 240);
-			con.setBackground(Color.GREEN);
+			//con.setBackground(Color.GREEN);
 		}
 		
 		else
 		{
-			System.out.println("ran because tried to draw something that didn't exist");
+			System.out.println("selectedIndex is " + selectedIndex + " and gameInProgress is " + gameInProgress);
 		}
 	}
 }
