@@ -63,6 +63,7 @@ public class Jupiterian extends Alien
 	
 	/**
 	 * draws the alien (Jupiterian)
+	 * @param pen is the object used to render the alien
 	 * @param x holds the int value for the starting x coordinate on the grid
 	 * @param y holds the int value for the starting y coordinate on the grid
 	 */
@@ -73,7 +74,7 @@ public class Jupiterian extends Alien
 		pen.drawRoundRect((x+45), (y+15), 13, 13, 12, 12); //right eye
 		pen.drawRoundRect((x+28), (y+38), 5, 5, 1, 1); //nose
 		pen.drawRoundRect((x+37), (y+38), 5, 5, 1, 1); //nose
-		pen.drawLine((x+20), (y+55), 193, 85); //(start x, start y, finish x, finish y) - mouth
+		pen.drawLine((x+20), (y+55), 193, 175); //(start x, start y, finish x, finish y) - mouth
 		
 	}
 	
@@ -85,6 +86,6 @@ public class Jupiterian extends Alien
 	 */
 	public void drawString(Graphics pen, int x, int y)
 	{
-		pen.drawString("I'm a Jupiterian", x, y);
+		pen.drawString("Found a Jupiterian", x, y);
 	}
 }

@@ -2,6 +2,8 @@
  * @author Aaron Toth 300770784
  * @version 1.0
  * Final Assignment for Java Intermediate
+ * 
+ * This abstract class is extended by Jupiterian and Martian
  */
 public abstract class Alien
 
