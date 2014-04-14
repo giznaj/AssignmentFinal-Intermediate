@@ -5,6 +5,8 @@ import java.awt.event.ActionListener;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
+import java.nio.file.FileSystem;
+import java.nio.file.FileSystems;
 import java.util.Date;
 import java.util.Random;
 import javax.swing.*;
@@ -26,21 +28,25 @@ public class JAlienHunt extends JApplet implements ActionListener
 	//random generator for mixing up the aliens/buttons
 	private final Random randomGenNumber = new Random();
 	
+	private FileSystem fs = FileSystems.getDefault(); //creates FileSystem object
+	private File scoresFile =  new File("OsNotKnown.txt");
+	
 	//keep track of the aliens found
-	private int jupiteriansFound;
-	private int martiansFound;
+	private int jupiteriansFound, martiansFound;
 	
 	//keep track of what button the user picked (according to the array of buttons)
 	private int selectedIndex;
 	
-	//score to write to the scores file
-	private int loggedScore = 0;
+	//scores used for the game
+	private int loggedScore = 0; //score of the game that just finished.  Score to be logged
+	private int currentHighScore = 0; //current high score of the active session
 	
 	//true if a game is in progress
 	private boolean gameInProgress;
 	
 	//applet label
 	private JLabel appletTicker = new JLabel("Alient Hunt 1.0");
+	private JLabel highScoreTicker = new JLabel("Current High Score: " + loggedScore);
 	
 	//applet buttons
 	private JButton oneButton = new JButton("#1");
@@ -61,7 +67,7 @@ public class JAlienHunt extends JApplet implements ActionListener
 	private JMenuItem exit = new JMenuItem("Exit");
 	private JMenuItem rules = new JMenuItem("Rules of Game");
 	private JMenuItem about = new JMenuItem("About");
-	private JCheckBoxMenuItem soundOff = new JCheckBoxMenuItem("Sound off");
+	private JCheckBoxMenuItem musicOff = new JCheckBoxMenuItem("Music off");
 	
 	//Martian classes
 	private Jupiterian newJupiterian = new Jupiterian(); //this alien is represented by a 0 in the alienArray[0]
@@ -83,10 +89,7 @@ public class JAlienHunt extends JApplet implements ActionListener
 	Date date = new Date();
 	
 	//music for the game
-	AudioClip gameMusic; 
-	AudioClip monkeyShout;
-	AudioClip blowUpEarth;
-	AudioClip drawingBoard;
+	AudioClip gameMusic, monkeyShout, blowUpEarth, drawingBoard;
 	
 	/**
 	 * initialize the two alien objects.  once initialized, this applet can call the draw methods in each of 
@@ -121,6 +124,7 @@ public class JAlienHunt extends JApplet implements ActionListener
 		con.add(sevenButton);
 		con.add(eightButton);
 		con.add(appletTicker);
+		con.add(highScoreTicker);
 		
 		//adds the menu bar and menu items to the applet/screen
 		setJMenuBar(mainBar);
@@ -129,7 +133,7 @@ public class JAlienHunt extends JApplet implements ActionListener
 		mainBar.add(menu3);
 		menu1.add(play);
 		menu1.add(exit);
-		menu2.add(soundOff);
+		menu2.add(musicOff);
 		menu3.add(rules);
 		menu3.add(about);
 		
@@ -146,7 +150,7 @@ public class JAlienHunt extends JApplet implements ActionListener
 		exit.addActionListener(this);
 		rules.addActionListener(this);
 		about.addActionListener(this);
-		soundOff.addActionListener(this);
+		musicOff.addActionListener(this);
 				
 		gameMusic = getAudioClip(getCodeBase(),"mysteryTune.au");
 		monkeyShout = getAudioClip(getCodeBase(), "monkey.au");
@@ -178,7 +182,7 @@ public class JAlienHunt extends JApplet implements ActionListener
 				jupiteriansFound = 0;
 				martiansFound = 0;
 				
-				if(soundOff.isSelected() == false) //prevent music from starting (if new game)
+				if(musicOff.isSelected() == false) //prevent music from starting (if new game)
 				{
 					gameMusic.loop();
 				}
@@ -210,25 +214,23 @@ public class JAlienHunt extends JApplet implements ActionListener
 						"Check Scores.txt for high scores and dates\n\n");
 			}
 			
-			//about popup window for the game
-			else if(userChoice.getSource() == about)
+			else if(userChoice.getSource() == about) //about popup window for the game
 			{
 				JOptionPane.showMessageDialog(null,"Game: Alien Hunt 1.0\nStudent: Aaron Toth\nStudent #: 300770784\n" +
 						"Project: Final Assignment\n\n");
 			}
 			
-			//stop/start music on a current game
-			else if(userChoice.getSource() == soundOff) 
+			else if(userChoice.getSource() == musicOff) //stop/start music on a current game
 			{
-				if(soundOff.isSelected() == true && gameInProgress == true)
-					{
-						gameMusic.stop();
-					}
+				if(musicOff.isSelected() == true) //no matter when the option is used, stop the music
+				{
+					gameMusic.stop();
+				}
 				
-				else if(soundOff.isSelected() == false && gameInProgress == true)
-					{
-						gameMusic.loop();
-					}
+				else if(musicOff.isSelected() == false && gameInProgress == true) //
+				{
+					gameMusic.loop();
+				}
 			}
 			
 			//check to see what button the user has pressed
@@ -302,66 +304,69 @@ public class JAlienHunt extends JApplet implements ActionListener
 	 */
 	public void scoreKeeper()
 	{
-		//check if the user found a jupiterian or an alien
-		if(alienArray[selectedIndex] == 0) //jupiterian found
+		if(alienArray[selectedIndex] == 0) //Jupiterian found
 		{
-			con.setBackground(Color.RED);
-			jupiteriansFound++;
-			monkeyShout.play();
-			System.out.println("You have found " + jupiteriansFound + " Jupiterians");
+			con.setBackground(Color.RED); //change background to red
+			jupiteriansFound++; //increment the number of Jupiterians found
+			monkeyShout.play(); //play the sound when uncovering/finding a Jupiterian
+			System.out.println("You have found " + jupiteriansFound + " Jupiterians"); //display the results to user
 			
-			if(jupiteriansFound == 2)
+			if(jupiteriansFound == 2) //game is over if this becomes true
 			{
-				//disables all buttons before the user decides to play a new game or not
-				for(int disableAll = 0; disableAll < buttonArray.length; disableAll++)
+				for(int disableAll = 0; disableAll < buttonArray.length; disableAll++) //disable all buttons.
 				{
 					buttonArray[disableAll].setEnabled(false);
 				}
 				
-				System.out.println("Game over, you lose!");
-				System.out.println("Earth has been destroyed!");
-				loggedScore = 0;
-				logScores(loggedScore);
-				gameMusic.stop();
-				blowUpEarth.play();
-				play.setEnabled(true);
+				System.out.println("Game over, you lose!"); //display message to the user
+				System.out.println("Earth has been destroyed!"); //display message to the user
+				loggedScore = 0; //score to be logged in scores.txt
+				logScores(loggedScore); //send score to the logScores() method
+				gameMusic.stop(); //stop the game music
+				blowUpEarth.play(); //play the sound when the player loses.  (earth being destroyed)
+				play.setEnabled(true); //enable the item 'File -> Play' menu item
 			}
 			
-			repaint();
+			repaint(); //apply the container changes
 		}
 		
-		else if(alienArray[selectedIndex] == 1) //martian found
+		else if(alienArray[selectedIndex] == 1) //Martian found
 		{
-			con.setBackground(Color.GREEN);
-			martiansFound++;
-			System.out.println("You have found " + martiansFound + " Martians");
+			con.setBackground(Color.GREEN); //change background to green
+			martiansFound++; //increment the number of Martians found
+			System.out.println("You have found " + martiansFound + " Martians"); //display the results to the user
 			
-			if(martiansFound == 6)
+			if(martiansFound == 6) //game over if this becomes true
 			{
-				//disables all buttons before the user decides to play the game
-				for(int disableAll = 0; disableAll < buttonArray.length; disableAll++)
+				for(int disableAll = 0; disableAll < buttonArray.length; disableAll++) //disable all buttons
 				{
 					buttonArray[disableAll].setEnabled(false);
 				}
 				
-				if(jupiteriansFound == 1)
+				if(jupiteriansFound == 1) //win, but not a perfect game (1 Jupiterian found)
 				{
 					System.out.println("Game over, you win!");
-					loggedScore = 10; //6 matians found and 1 jupiterian found
+					loggedScore = 10; //6 Martians found and 1 Jupiterian found
 				}
 				
-				else if(jupiteriansFound == 0)
+				else if(jupiteriansFound == 0) //perfect game.  no Jupiterians found
 				{
 					System.out.println("Game over, you win!");
 					System.out.println("A PERFECT GAME!");
-					loggedScore = 20; //6 martians found and 0 jupiterians found (perfect game)
+					loggedScore = 20; //6 Martians found and 0 Jupiterians found (perfect game)
 				}
 				
-				System.out.println("Earth has been saved!");
-				logScores(loggedScore);
-				gameMusic.stop();
-				drawingBoard.play();
-				play.setEnabled(true);
+				System.out.println("Earth has been saved!"); //display a message to the user
+				logScores(loggedScore); //send score to the logScores() method
+				gameMusic.stop(); //stop the background music
+				drawingBoard.play(); //play the sound when the player wins.  (earth being saved)
+				play.setEnabled(true); //enable the item 'File -> Play' menu item
+				
+				if(loggedScore > currentHighScore) //write the new high score if it is actually higher
+				{
+					highScoreTicker.setText("Current High Score: " + loggedScore);
+					currentHighScore = loggedScore;
+				}
 			}	
 			
 			repaint();
@@ -400,28 +405,30 @@ public class JAlienHunt extends JApplet implements ActionListener
 	{			
 		try
 		{
-			//concatenate the score and text to be written to the scores.txt file
 			String scoreString = "Scored " + loggedScore + " points on " + date.toString();
-			
-			//UNIX
-			File file = new File("/home/aaron/Documents/Centennial/Intermediate/Assignments/Test/scores.txt");
-			
-			//Windoze
-			//File file = new File("C:\\temp\\scores.txt");
-			
-			if(!file.exists())
+			if(fs.toString().contains("Linux")) //checks for file on a UNIX file system
 			{
-				System.out.println("Created the file: " + file.getName().toString() + " and added the first score");
-				System.out.println("Path : " + file.getPath());
-    			file.createNewFile();
+				scoresFile = new File("/home/aaron/Documents/Centennial/Intermediate/Assignments/Test/scores.txt");
+			}
+			
+			else if(fs.toString().contains("Windows")) //checks for file on a Windows file system
+			{
+				scoresFile = new File("C:\\temp\\scores.txt");
+			}
+			
+			if(!scoresFile.exists())
+			{
+				System.out.println("Created the file: " + scoresFile.getName().toString() + " and added the first score");
+				System.out.println("Path : " + scoresFile.getPath());
+				scoresFile.createNewFile();
     		}
 			
 			else
 			{
-				System.out.println("Updated the file: " + file.getName().toString() + " with the new scores");
+				System.out.println("Updated the file: " + scoresFile.getName().toString() + " with the new scores");
 			}
 			
-    		FileWriter fileWriter = new FileWriter(file,true);
+    		FileWriter fileWriter = new FileWriter(scoresFile,true);
     	    BufferedWriter bufferedWriter = new BufferedWriter(fileWriter);
     	    bufferedWriter.write(scoreString);
     	    bufferedWriter.newLine();
@@ -441,25 +448,23 @@ public class JAlienHunt extends JApplet implements ActionListener
 	 */
 	public void paint(Graphics pen)
 	{
-		System.out.println("Paint method ran");
 		super.paint(pen);
 		if(alienArray[selectedIndex] == 0 && gameInProgress == true)
 		{
-			newJupiterian.draw(pen, 145, 120);
-			newJupiterian.drawString(pen, 115, 240);
-			//con.setBackground(Color.RED);
+			newJupiterian.draw(pen, 145, 150);
+			newJupiterian.drawString(pen, 115, 270);
 		}
 		
 		else if(alienArray[selectedIndex] == 1 && gameInProgress == true)
 		{
-			newMartian.draw(pen, 25, 130);
-			newMartian.drawString(pen, 10, 240);
-			//con.setBackground(Color.GREEN);
+			newMartian.draw(pen, 25, 160);
+			newMartian.drawString(pen, 10, 270);
 		}
 		
-		else
+		else if (gameInProgress == false) //game over.  show both aliens
 		{
-			System.out.println("selectedIndex is " + selectedIndex + " and gameInProgress is " + gameInProgress);
+			newJupiterian.draw(pen, 145, 150);
+			newMartian.draw(pen, 25, 160);
 		}
 	}
 }

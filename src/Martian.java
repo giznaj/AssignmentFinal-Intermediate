@@ -72,7 +72,7 @@ public class Martian extends Alien
 		pen.drawRoundRect(x, y, WIDTH, HEIGHT, arcSize, arcSize); //head
 		pen.drawRoundRect((x+10), (y+10), 10, 10, 12, 12); //left eye
 		pen.drawRoundRect((x+30), (y+10), 10, 10, 12, 12); //right eye
-		pen.drawLine((x+10), (y+35), 65, 165); //(start x, start y, finish x, finish y) - mouth
+		pen.drawLine((x+10), (y+35), 65, 195); //(start x, start y, finish x, finish y) - mouth
 		pen.drawLine((x+25), y, (x+25), (y-20)); //antenna
 		pen.drawLine((x+15), (y-15), 60, (y-15)); //antenna
 	}

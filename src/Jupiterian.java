@@ -74,7 +74,7 @@ public class Jupiterian extends Alien
 		pen.drawRoundRect((x+45), (y+15), 13, 13, 12, 12); //right eye
 		pen.drawRoundRect((x+28), (y+38), 5, 5, 1, 1); //nose
 		pen.drawRoundRect((x+37), (y+38), 5, 5, 1, 1); //nose
-		pen.drawLine((x+20), (y+55), 193, 175); //(start x, start y, finish x, finish y) - mouth
+		pen.drawLine((x+20), (y+55), 193, 205); //(start x, start y, finish x, finish y) - mouth
 		
 	}
 	
